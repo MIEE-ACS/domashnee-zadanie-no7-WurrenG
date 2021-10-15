@@ -1,0 +1,14 @@
+I have added a "Bonus" class describing the behaviour of a bonus object on the game field.
+
+The launch of the game by clicking on the button in the main application window was replañed by
+launching via any key on a keyboard.To implement this functionality I have removed the method
+in MainWindow class that handled clicking on the start button. I replaced it with the
+startGame method.
+
+I have modified the Window_KeyDown method in MainWindow class to call the startGame
+method whenever moveTimer is disabled. I have also modified the UpdateField and
+moveTimer_Tick methods in MainWindow class to draw a bonus object and provide interaction
+with it.
+
+In the visual interface I removed the start button, maked the background transparent
+and changed color of the foreground of the displayed titles.

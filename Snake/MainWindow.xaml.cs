@@ -28,6 +28,8 @@ namespace Snake
         List<PositionedEntity> snake;
         // яблоко
         Apple apple;
+        Bonus bonus;
+        int bonusTimeCounter = 0;
         //количество очков
         int score;
         //таймер по которому 
@@ -62,7 +64,9 @@ namespace Snake
             //обновляем положение яблока
             Canvas.SetTop(apple.image, apple.y);
             Canvas.SetLeft(apple.image, apple.x);
-            
+            Canvas.SetTop(bonus.image, bonus.y);
+            Canvas.SetLeft(bonus.image, bonus.x);
+
             //обновляем количество очков
             lblScore.Content = String.Format("{0}000", score);
         }
@@ -102,13 +106,28 @@ namespace Snake
             if (head.x == apple.x && head.y == apple.y)
             {
                 //увеличиваем счет
-                score++;
+                if (bonusTimeCounter > 0)
+                    score += 10;
+                else
+                    score++;
                 //двигаем яблоко на новое место
                 apple.move();
                 // добавляем новый сегмент к змее
                 var part = new BodyPart(snake.Last());
                 canvas1.Children.Add(part.image);
                 snake.Add(part);
+            }
+
+            if (bonusTimeCounter > 0)
+                bonusTimeCounter -= 300;
+            else
+                tbBonus.Visibility = Visibility.Hidden;
+
+            if (head.x == bonus.x && head.y == bonus.y)
+            {
+                bonus.move();
+                bonusTimeCounter = 30000;
+                tbBonus.Visibility = Visibility.Visible;
             }
             //перерисовываем экран
             UpdateField();
@@ -117,6 +136,11 @@ namespace Snake
         // Обработчик нажатия на кнопку клавиатуры
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
+            if (!moveTimer.IsEnabled)
+            {
+                startGame();
+                return;
+            }
             switch (e.Key)
             {
                 case Key.Up:
@@ -134,8 +158,7 @@ namespace Snake
             }
         }
 
-        // Обработчик нажатия кнопки "Start"
-        private void button1_Click(object sender, RoutedEventArgs e)
+        private void startGame()
         {
             // обнуляем счет
             score = 0;
@@ -145,22 +168,24 @@ namespace Snake
             canvas1.Children.Clear();
             // скрываем надпись "Game Over"
             tbGameOver.Visibility = Visibility.Hidden;
-            
+            tbStart.Visibility = Visibility.Hidden; 
+
             // добавляем поле на канвас
             canvas1.Children.Add(field.image);
             // создаем новое яблоко и добавлем его
             apple = new Apple(snake);
             canvas1.Children.Add(apple.image);
+            bonus = new Bonus(snake);
+            canvas1.Children.Add(bonus.image);
             // создаем голову
             head = new Head();
             snake.Add(head);
             canvas1.Children.Add(head.image);
-            
+
             //запускаем таймер
             moveTimer.Start();
             UpdateField();
-
-        }
+    }
         
         public class Entity
         {
@@ -228,6 +253,7 @@ namespace Snake
 
         public class Apple : PositionedEntity
         {
+            static Random rand = new Random();
             List<PositionedEntity> m_snake;
             public Apple(List<PositionedEntity> s)
                 : base(0, 0, 40, 40, "pack://application:,,,/Resources/fruit.png")
@@ -238,7 +264,39 @@ namespace Snake
 
             public override void move()
             {
-                Random rand = new Random();
+                do
+                {
+                    x = rand.Next(13) * 40 + 40;
+                    y = rand.Next(13) * 40 + 40;
+                    bool overlap = false;
+                    foreach (var p in m_snake)
+                    {
+                        if (p.x == x && p.y == y)
+                        {
+                            overlap = true;
+                            break;
+                        }
+                    }
+                    if (!overlap)
+                        break;
+                } while (true);
+
+            }
+        }
+
+        public class Bonus : PositionedEntity
+        {
+            List<PositionedEntity> m_snake;
+            static Random rand = new Random();
+            public Bonus(List<PositionedEntity> s) 
+                : base(0, 0, 40, 40, "pack://application:,,,/Resources/bunny.png")
+            {
+                m_snake = s;
+                move();
+            }
+
+            public override void move()
+            {
                 do
                 {
                     x = rand.Next(13) * 40 + 40;
@@ -319,5 +377,6 @@ namespace Snake
                 y = m_next.y;
             }
         }
+
     }
 }
